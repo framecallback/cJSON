@@ -104,6 +104,7 @@ typedef struct cJSON
     /* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */
     struct cJSON *next;
     struct cJSON *prev;
+    /* parent allow you to delete any node safely. */
     struct cJSON *parent;
     /* An array or object item will have a child pointer pointing to a chain of the items in the array/object. */
     struct cJSON *child;
@@ -125,6 +126,7 @@ typedef struct cJSON_Hooks
     /* malloc/free are CDECL on Windows regardless of the default calling convention of the compiler, so ensure the hooks allow passing those functions directly. */
     void *(CJSON_CDECL *malloc_fn)(size_t sz);
     void (CJSON_CDECL *free_fn)(void *ptr);
+    void *(CJSON_CDECL *realloc_fn)(void *ptr, size_t sz);
 } cJSON_Hooks;
 
 typedef int cJSON_bool;

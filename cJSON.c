@@ -241,7 +241,11 @@ CJSON_PUBLIC(void) cJSON_InitHooks(cJSON_Hooks* hooks)
 
     /* use realloc only if both free and malloc are used */
     global_hooks.reallocate = NULL;
-    if ((global_hooks.allocate == malloc) && (global_hooks.deallocate == free))
+    if (hooks->realloc_fn != NULL)
+    {
+        global_hooks.reallocate = hooks->realloc_fn;
+    }
+    else if ((global_hooks.allocate == malloc) && (global_hooks.deallocate == free))
     {
         global_hooks.reallocate = realloc;
     }

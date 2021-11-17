@@ -42,7 +42,8 @@ static void CJSON_CDECL normal_free(void *pointer)
 
 static cJSON_Hooks failing_hooks = {
     failing_malloc,
-    normal_free
+    normal_free,
+    NULL
 };
 
 static void cjson_add_null_should_add_null(void)
