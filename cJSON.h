@@ -113,8 +113,6 @@ typedef struct cJSON
 
     /* The item's string, if type==cJSON_String  and type == cJSON_Raw */
     char *valuestring;
-    /* writing to valueint is DEPRECATED, use cJSON_SetNumberValue instead */
-    int valueint;
     /* The item's number, if type==cJSON_Number */
     double valuedouble;
 
@@ -271,11 +269,8 @@ CJSON_PUBLIC(cJSON*) cJSON_AddRawToObject(cJSON * const object, const char * con
 CJSON_PUBLIC(cJSON*) cJSON_AddObjectToObject(cJSON * const object, const char * const name);
 CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON * const object, const char * const name);
 
-/* When assigning an integer value, it needs to be propagated to valuedouble too. */
-#define cJSON_SetIntValue(object, number) ((object) ? (object)->valueint = (object)->valuedouble = (number) : (number))
-/* helper for the cJSON_SetNumberValue macro */
-CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number);
-#define cJSON_SetNumberValue(object, number) ((object != NULL) ? cJSON_SetNumberHelper(object, (double)number) : (number))
+/* Change the valuedouble of a cJSON_String object, only takes effect when type of object is cJSON_Number */
+CJSON_PUBLIC(double) cJSON_SetNumberValue(cJSON *object, double number);
 /* Change the valuestring of a cJSON_String object, only takes effect when type of object is cJSON_String */
 CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring);
 

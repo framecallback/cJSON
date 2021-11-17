@@ -357,21 +357,6 @@ loop_end:
     }
 
     item->valuedouble = number;
-
-    /* use saturation in case of overflow */
-    if (number >= INT_MAX)
-    {
-        item->valueint = INT_MAX;
-    }
-    else if (number <= (double)INT_MIN)
-    {
-        item->valueint = INT_MIN;
-    }
-    else
-    {
-        item->valueint = (int)number;
-    }
-
     item->type = cJSON_Number;
 
     input_buffer->offset += (size_t)(after_end - number_c_string);
@@ -381,19 +366,6 @@ loop_end:
 /* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
 CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
 {
-    if (number >= INT_MAX)
-    {
-        object->valueint = INT_MAX;
-    }
-    else if (number <= (double)INT_MIN)
-    {
-        object->valueint = INT_MIN;
-    }
-    else
-    {
-        object->valueint = (int)number;
-    }
-
     return object->valuedouble = number;
 }
 
@@ -1324,6 +1296,7 @@ static cJSON_bool parse_value(cJSON * const item, parse_buffer * const input_buf
     if (can_read(input_buffer, 5) && (strncmp((const char*)buffer_at_offset(input_buffer), "false", 5) == 0))
     {
         item->type = cJSON_False;
+        item->valuedouble = 0;
         input_buffer->offset += 5;
         return true;
     }
@@ -1331,7 +1304,7 @@ static cJSON_bool parse_value(cJSON * const item, parse_buffer * const input_buf
     if (can_read(input_buffer, 4) && (strncmp((const char*)buffer_at_offset(input_buffer), "true", 4) == 0))
     {
         item->type = cJSON_True;
-        item->valueint = 1;
+        item->valuedouble = 1;
         input_buffer->offset += 4;
         return true;
     }
@@ -2424,20 +2397,6 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
     {
         item->type = cJSON_Number;
         item->valuedouble = num;
-
-        /* use saturation in case of overflow */
-        if (num >= INT_MAX)
-        {
-            item->valueint = INT_MAX;
-        }
-        else if (num <= (double)INT_MIN)
-        {
-            item->valueint = INT_MIN;
-        }
-        else
-        {
-            item->valueint = (int)num;
-        }
     }
 
     return item;
@@ -2714,7 +2673,6 @@ CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse)
     }
     /* Copy over all vars */
     newitem->type = item->type & (~cJSON_IsReference);
-    newitem->valueint = item->valueint;
     newitem->valuedouble = item->valuedouble;
     if (item->valuestring)
     {
