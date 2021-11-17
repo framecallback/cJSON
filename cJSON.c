@@ -116,6 +116,16 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
     return item->valuedouble;
 }
 
+CJSON_PUBLIC(cJSON_bool) cJSON_GetBoolValue(const cJSON * const item) 
+{
+    if (!cJSON_IsBool(item)) 
+    {
+        return false;
+    }
+
+    return (cJSON_bool)item->valuedouble;
+}
+
 /* This is a safeguard to prevent copy-pasters from using incompatible C and header files */
 #if (CJSON_VERSION_MAJOR != 2) || (CJSON_VERSION_MINOR != 0) || (CJSON_VERSION_PATCH != 0)
     #error cJSON.h and cJSON.c have different versions. Make sure that both have the same.
@@ -363,29 +373,44 @@ loop_end:
     return true;
 }
 
-/* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
-CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number)
+CJSON_PUBLIC(cJSON_bool) cJSON_SetBoolValue(cJSON *object, cJSON_bool value)
 {
-    return object->valuedouble = number;
+    if (!(object->type & cJSON_Bool))
+    {
+        return false;
+    }
+    object->valuedouble = value;
+    return true;
 }
 
-CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
+/* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
+CJSON_PUBLIC(cJSON_bool) cJSON_SetNumberHelper(cJSON *object, double number)
+{
+    if (!(object->type & cJSON_Number))
+    {
+        return false;
+    }
+    object->valuedouble = number;
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cJSON_SetValuestring(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
     /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */
     if (!(object->type & cJSON_String) || (object->type & cJSON_IsReference))
     {
-        return NULL;
+        return false;
     }
     if (strlen(valuestring) <= strlen(object->valuestring))
     {
         strcpy(object->valuestring, valuestring);
-        return object->valuestring;
+        return true;
     }
     copy = (char*) cJSON_strdup((const unsigned char*)valuestring, &global_hooks);
     if (copy == NULL)
     {
-        return NULL;
+        return false;
     }
     if (object->valuestring != NULL)
     {
@@ -393,7 +418,7 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
     }
     object->valuestring = copy;
 
-    return copy;
+    return true;
 }
 
 typedef struct
