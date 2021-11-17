@@ -104,6 +104,7 @@ typedef struct cJSON
     /* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */
     struct cJSON *next;
     struct cJSON *prev;
+    struct cJSON *parent;
     /* An array or object item will have a child pointer pointing to a chain of the items in the array/object. */
     struct cJSON *child;
 
@@ -121,9 +122,9 @@ typedef struct cJSON
 
 typedef struct cJSON_Hooks
 {
-      /* malloc/free are CDECL on Windows regardless of the default calling convention of the compiler, so ensure the hooks allow passing those functions directly. */
-      void *(CJSON_CDECL *malloc_fn)(size_t sz);
-      void (CJSON_CDECL *free_fn)(void *ptr);
+    /* malloc/free are CDECL on Windows regardless of the default calling convention of the compiler, so ensure the hooks allow passing those functions directly. */
+    void *(CJSON_CDECL *malloc_fn)(size_t sz);
+    void (CJSON_CDECL *free_fn)(void *ptr);
 } cJSON_Hooks;
 
 typedef int cJSON_bool;
@@ -228,7 +229,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_AddItemReferenceToArray(cJSON *array, cJSON *item
 CJSON_PUBLIC(cJSON_bool) cJSON_AddItemReferenceToObject(cJSON *object, const char *name, cJSON *item);
 
 /* Detach items from Arrays/Objects. */
-CJSON_PUBLIC(cJSON *) cJSON_DetachItemViaPointer(cJSON *parent, cJSON *item);
+CJSON_PUBLIC(cJSON *) cJSON_DetachItemViaPointer(cJSON *item);
 CJSON_PUBLIC(cJSON *) cJSON_DetachItemFromArray(cJSON *array, int which);
 CJSON_PUBLIC(void) cJSON_DeleteItemFromArray(cJSON *array, int which);
 CJSON_PUBLIC(cJSON *) cJSON_DetachItemFromObject(cJSON *object, const char *name);
@@ -240,7 +241,7 @@ CJSON_PUBLIC(void) cJSON_DeleteItemFromObjectCaseSensitive(cJSON *object, const 
 
 /* Update array items. */
 CJSON_PUBLIC(cJSON_bool) cJSON_InsertItemInArray(cJSON *array, int which, cJSON *newitem); /* Shifts pre-existing items to the right. */
-CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemViaPointer(cJSON *parent, cJSON *item, cJSON * replacement);
+CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemViaPointer(cJSON *item, cJSON * replacement);
 CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemInArray(cJSON *array, int which, cJSON *newitem);
 CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemInObject(cJSON *object, const char *string, cJSON *newitem);
 CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemInObjectCaseSensitive(cJSON *object, const char *string, cJSON *newitem);

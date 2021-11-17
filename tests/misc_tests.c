@@ -214,7 +214,7 @@ static void cjson_should_not_parse_to_deeply_nested_jsons(void)
 
 static void cjson_set_number_value_should_set_numbers(void)
 {
-    cJSON number[1] = {{NULL, NULL, NULL, cJSON_Number, NULL, 0, NULL}};
+    cJSON number[1] = {{NULL, NULL, NULL, NULL, cJSON_Number, NULL, 0, NULL}};
 
     cJSON_SetNumber(number, 1.5);
     TEST_ASSERT_EQUAL_DOUBLE(1.5, number->number);
@@ -246,25 +246,30 @@ static void cjson_detach_item_via_pointer_should_detach_items(void)
     list[1].prev = &(list[0]);
     list[0].prev = &(list[3]);
 
+    list[3].parent = parent;
+    list[2].parent = parent;
+    list[1].parent = parent;
+    list[0].parent = parent;
+
     parent->child = &list[0];
 
     /* detach in the middle (list[1]) */
-    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(parent, &(list[1])) == &(list[1]), "Failed to detach in the middle.");
+    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(&(list[1])) == &(list[1]), "Failed to detach in the middle.");
     TEST_ASSERT_TRUE_MESSAGE((list[1].prev == NULL) && (list[1].next == NULL), "Didn't set pointers of detached item to NULL.");
     TEST_ASSERT_TRUE((list[0].next == &(list[2])) && (list[2].prev == &(list[0])));
 
     /* detach beginning (list[0]) */
-    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(parent, &(list[0])) == &(list[0]), "Failed to detach beginning.");
+    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(&(list[0])) == &(list[0]), "Failed to detach beginning.");
     TEST_ASSERT_TRUE_MESSAGE((list[0].prev == NULL) && (list[0].next == NULL), "Didn't set pointers of detached item to NULL.");
     TEST_ASSERT_TRUE_MESSAGE((list[2].prev == &(list[3])) && (parent->child == &(list[2])), "Didn't set the new beginning.");
 
     /* detach end (list[3])*/
-    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(parent, &(list[3])) == &(list[3]), "Failed to detach end.");
+    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(&(list[3])) == &(list[3]), "Failed to detach end.");
     TEST_ASSERT_TRUE_MESSAGE((list[3].prev == NULL) && (list[3].next == NULL), "Didn't set pointers of detached item to NULL.");
     TEST_ASSERT_TRUE_MESSAGE((list[2].next == NULL) && (parent->child == &(list[2])), "Didn't set the new end");
 
     /* detach single item (list[2]) */
-    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(parent, &list[2]) == &list[2], "Failed to detach single item.");
+    TEST_ASSERT_TRUE_MESSAGE(cJSON_DetachItemViaPointer(&list[2]) == &list[2], "Failed to detach single item.");
     TEST_ASSERT_TRUE_MESSAGE((list[2].prev == NULL) && (list[2].next == NULL), "Didn't set pointers of detached item to NULL.");
     TEST_ASSERT_NULL_MESSAGE(parent->child, "Child of the parent wasn't set to NULL.");
 }
@@ -295,20 +300,20 @@ static void cjson_replace_item_via_pointer_should_replace_items(void)
     memset(replacements, '\0', sizeof(replacements));
 
     /* replace beginning */
-    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(array, beginning, &(replacements[0])));
+    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(beginning, &(replacements[0])));
     TEST_ASSERT_TRUE(replacements[0].prev == end);
     TEST_ASSERT_TRUE(replacements[0].next == middle);
     TEST_ASSERT_TRUE(middle->prev == &(replacements[0]));
     TEST_ASSERT_TRUE(array->child == &(replacements[0]));
 
     /* replace middle */
-    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(array, middle, &(replacements[1])));
+    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(middle, &(replacements[1])));
     TEST_ASSERT_TRUE(replacements[1].prev == &(replacements[0]));
     TEST_ASSERT_TRUE(replacements[1].next == end);
     TEST_ASSERT_TRUE(end->prev == &(replacements[1]));
 
     /* replace end */
-    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(array, end, &(replacements[2])));
+    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(end, &(replacements[2])));
     TEST_ASSERT_TRUE(replacements[2].prev == &(replacements[1]));
     TEST_ASSERT_NULL(replacements[2].next);
     TEST_ASSERT_TRUE(replacements[1].next == &(replacements[2]));
@@ -318,7 +323,7 @@ static void cjson_replace_item_via_pointer_should_replace_items(void)
 
 static void cjson_replace_item_in_object_should_preserve_name(void)
 {
-    cJSON root[1] = {{ NULL, NULL, NULL, 0, NULL, 0, NULL }};
+    cJSON root[1] = {{ NULL, NULL, NULL, NULL, 0, NULL, 0, NULL }};
     cJSON *child = NULL;
     cJSON *replacement = NULL;
     cJSON_bool flag = false;
@@ -387,8 +392,8 @@ static void cjson_functions_should_not_crash_with_null_pointers(void)
     cJSON_AddItemReferenceToObject(item, "item", NULL);
     cJSON_AddItemReferenceToObject(item, NULL, item);
     cJSON_AddItemReferenceToObject(NULL, "item", item);
-    TEST_ASSERT_NULL(cJSON_DetachItemViaPointer(NULL, item));
-    TEST_ASSERT_NULL(cJSON_DetachItemViaPointer(item, NULL));
+    TEST_ASSERT_EQUAL(item, cJSON_DetachItemViaPointer(item));
+    TEST_ASSERT_NULL(cJSON_DetachItemViaPointer(NULL));
     TEST_ASSERT_NULL(cJSON_DetachItemFromArray(NULL, 0));
     cJSON_DeleteItemFromArray(NULL, 0);
     TEST_ASSERT_NULL(cJSON_DetachItemFromObject(NULL, "item"));
@@ -401,9 +406,9 @@ static void cjson_functions_should_not_crash_with_null_pointers(void)
     cJSON_DeleteItemFromObjectCaseSensitive(item, NULL);
     TEST_ASSERT_FALSE(cJSON_InsertItemInArray(NULL, 0, item));
     TEST_ASSERT_FALSE(cJSON_InsertItemInArray(item, 0, NULL));
-    TEST_ASSERT_FALSE(cJSON_ReplaceItemViaPointer(NULL, item, item));
-    TEST_ASSERT_FALSE(cJSON_ReplaceItemViaPointer(item, NULL, item));
-    TEST_ASSERT_FALSE(cJSON_ReplaceItemViaPointer(item, item, NULL));
+    TEST_ASSERT_TRUE(cJSON_ReplaceItemViaPointer(item, item));
+    TEST_ASSERT_FALSE(cJSON_ReplaceItemViaPointer(NULL, item));
+    TEST_ASSERT_FALSE(cJSON_ReplaceItemViaPointer(item, NULL));
     TEST_ASSERT_FALSE(cJSON_ReplaceItemInArray(item, 0, NULL));
     TEST_ASSERT_FALSE(cJSON_ReplaceItemInArray(NULL, 0, item));
     TEST_ASSERT_FALSE(cJSON_ReplaceItemInObject(NULL, "item", item));

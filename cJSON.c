@@ -263,6 +263,13 @@ static cJSON *cJSON_New_Item(const internal_hooks *hooks)
 CJSON_PUBLIC(void) cJSON_Delete(cJSON *item)
 {
     cJSON *next = NULL;
+
+    /* Cannot delete item if it has parent. */
+    if (item == NULL || item->parent != NULL)
+    {
+        return;
+    }
+
     while (item != NULL)
     {
         next = item->next;
@@ -1486,6 +1493,7 @@ static cJSON_bool parse_array(cJSON *item, parse_buffer *input_buffer)
             new_item->prev = current_item;
             current_item = new_item;
         }
+        current_item->parent = item;
 
         /* parse next value */
         input_buffer->offset++;
@@ -1644,6 +1652,7 @@ static cJSON_bool parse_object(cJSON *item, parse_buffer *input_buffer)
             new_item->prev = current_item;
             current_item = new_item;
         }
+        current_item->parent = item;
 
         /* parse the name of the child */
         input_buffer->offset++;
@@ -1920,6 +1929,7 @@ static void suffix_object(cJSON *prev, cJSON *item)
 {
     prev->next = item;
     item->prev = prev;
+    item->parent = prev->parent;
 }
 
 /* Utility for handling references. */
@@ -1940,7 +1950,7 @@ static cJSON *create_reference(const cJSON *item, const internal_hooks *hooks)
     memcpy(reference, item, sizeof(cJSON));
     reference->name = NULL;
     reference->type |= cJSON_IsReference;
-    reference->next = reference->prev = NULL;
+    reference->next = reference->prev = reference->parent = NULL;
     return reference;
 }
 
@@ -1954,6 +1964,7 @@ static cJSON_bool add_item_to_array(cJSON *array, cJSON *item)
     }
 
     child = array->child;
+    item->parent = array;
     /*
      * To find the last item in array quickly, we use prev in array
      */
@@ -2151,11 +2162,19 @@ CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON *object, const char *name)
     return NULL;
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_DetachItemViaPointer(cJSON *parent, cJSON *item)
+CJSON_PUBLIC(cJSON *) cJSON_DetachItemViaPointer(cJSON *item)
 {
-    if ((parent == NULL) || (item == NULL))
+    cJSON* parent = NULL;
+
+    if (item == NULL)
     {
         return NULL;
+    }
+
+    parent = item->parent;
+    if (parent == NULL)
+    {
+        return item;
     }
 
     if (item != parent->child)
@@ -2183,6 +2202,7 @@ CJSON_PUBLIC(cJSON *) cJSON_DetachItemViaPointer(cJSON *parent, cJSON *item)
     /* make sure the detached item doesn't point anywhere anymore */
     item->prev = NULL;
     item->next = NULL;
+    item->parent = NULL;
 
     return item;
 }
@@ -2194,7 +2214,7 @@ CJSON_PUBLIC(cJSON *) cJSON_DetachItemFromArray(cJSON *array, int which)
         return NULL;
     }
 
-    return cJSON_DetachItemViaPointer(array, get_array_item(array, (size_t)which));
+    return cJSON_DetachItemViaPointer(get_array_item(array, (size_t)which));
 }
 
 CJSON_PUBLIC(void) cJSON_DeleteItemFromArray(cJSON *array, int which)
@@ -2206,14 +2226,14 @@ CJSON_PUBLIC(cJSON *) cJSON_DetachItemFromObject(cJSON *object, const char *stri
 {
     cJSON *to_detach = cJSON_GetObjectItem(object, string);
 
-    return cJSON_DetachItemViaPointer(object, to_detach);
+    return cJSON_DetachItemViaPointer(to_detach);
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_DetachItemFromObjectCaseSensitive(cJSON *object, const char *string)
 {
     cJSON *to_detach = cJSON_GetObjectItemCaseSensitive(object, string);
 
-    return cJSON_DetachItemViaPointer(object, to_detach);
+    return cJSON_DetachItemViaPointer(to_detach);
 }
 
 CJSON_PUBLIC(void) cJSON_DeleteItemFromObject(cJSON *object, const char *string)
@@ -2244,6 +2264,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_InsertItemInArray(cJSON *array, int which, cJSON 
 
     newitem->next = after_inserted;
     newitem->prev = after_inserted->prev;
+    newitem->parent = array;
     after_inserted->prev = newitem;
     if (after_inserted == array->child)
     {
@@ -2256,9 +2277,10 @@ CJSON_PUBLIC(cJSON_bool) cJSON_InsertItemInArray(cJSON *array, int which, cJSON 
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemViaPointer(cJSON *parent, cJSON *item, cJSON * replacement)
+CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemViaPointer(cJSON *item, cJSON * replacement)
 {
-    if ((parent == NULL) || (replacement == NULL) || (item == NULL))
+    cJSON* parent = NULL;
+    if ((replacement == NULL) || (item == NULL))
     {
         return false;
     }
@@ -2268,8 +2290,15 @@ CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemViaPointer(cJSON *parent, cJSON *item,
         return true;
     }
 
+    parent = item->parent;
+    if (parent == NULL)
+    {
+        return false;
+    }
+
     replacement->next = item->next;
     replacement->prev = item->prev;
+    replacement->parent = item->parent;
 
     if (replacement->next != NULL)
     {
@@ -2300,6 +2329,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemViaPointer(cJSON *parent, cJSON *item,
 
     item->next = NULL;
     item->prev = NULL;
+    item->parent = NULL;
     cJSON_Delete(item);
 
     return true;
@@ -2312,7 +2342,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemInArray(cJSON *array, int which, cJSON
         return false;
     }
 
-    return cJSON_ReplaceItemViaPointer(array, get_array_item(array, (size_t)which), newitem);
+    return cJSON_ReplaceItemViaPointer(get_array_item(array, (size_t)which), newitem);
 }
 
 static cJSON_bool replace_item_in_object(cJSON *object, const char *string, cJSON *replacement, cJSON_bool case_sensitive)
@@ -2330,7 +2360,7 @@ static cJSON_bool replace_item_in_object(cJSON *object, const char *string, cJSO
     replacement->name = (char*)cJSON_strdup((const unsigned char*)string, &global_hooks);
     replacement->type &= ~cJSON_StringIsConst;
 
-    return cJSON_ReplaceItemViaPointer(object, get_object_item(object, string, case_sensitive), replacement);
+    return cJSON_ReplaceItemViaPointer(get_object_item(object, string, case_sensitive), replacement);
 }
 
 CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemInObject(cJSON *object, const char *string, cJSON *newitem)
@@ -2694,6 +2724,7 @@ CJSON_PUBLIC(cJSON *) cJSON_Duplicate(const cJSON *item, cJSON_bool recurse)
             newitem->child = newchild;
             next = newchild;
         }
+        child->parent = newitem;
         child = child->next;
     }
     if (newitem && newitem->child)
