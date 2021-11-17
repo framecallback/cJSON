@@ -80,15 +80,15 @@ static void cjson_get_object_item_should_get_object_items(void)
 
     found = cJSON_GetObjectItem(item, "one");
     TEST_ASSERT_NOT_NULL_MESSAGE(found, "Failed to find first item.");
-    TEST_ASSERT_EQUAL_DOUBLE(found->valuedouble, 1);
+    TEST_ASSERT_EQUAL_DOUBLE(found->number, 1);
 
     found = cJSON_GetObjectItem(item, "tWo");
     TEST_ASSERT_NOT_NULL_MESSAGE(found, "Failed to find first item.");
-    TEST_ASSERT_EQUAL_DOUBLE(found->valuedouble, 2);
+    TEST_ASSERT_EQUAL_DOUBLE(found->number, 2);
 
     found = cJSON_GetObjectItem(item, "three");
     TEST_ASSERT_NOT_NULL_MESSAGE(found, "Failed to find item.");
-    TEST_ASSERT_EQUAL_DOUBLE(found->valuedouble, 3);
+    TEST_ASSERT_EQUAL_DOUBLE(found->number, 3);
 
     found = cJSON_GetObjectItem(item, "four");
     TEST_ASSERT_NULL_MESSAGE(found, "Should not find something that isn't there.");
@@ -111,15 +111,15 @@ static void cjson_get_object_item_case_sensitive_should_get_object_items(void)
 
     found = cJSON_GetObjectItemCaseSensitive(item, "one");
     TEST_ASSERT_NOT_NULL_MESSAGE(found, "Failed to find first item.");
-    TEST_ASSERT_EQUAL_DOUBLE(found->valuedouble, 1);
+    TEST_ASSERT_EQUAL_DOUBLE(found->number, 1);
 
     found = cJSON_GetObjectItemCaseSensitive(item, "Two");
     TEST_ASSERT_NOT_NULL_MESSAGE(found, "Failed to find first item.");
-    TEST_ASSERT_EQUAL_DOUBLE(found->valuedouble, 2);
+    TEST_ASSERT_EQUAL_DOUBLE(found->number, 2);
 
     found = cJSON_GetObjectItemCaseSensitive(item, "tHree");
     TEST_ASSERT_NOT_NULL_MESSAGE(found, "Failed to find item.");
-    TEST_ASSERT_EQUAL_DOUBLE(found->valuedouble, 3);
+    TEST_ASSERT_EQUAL_DOUBLE(found->number, 3);
 
     found = cJSON_GetObjectItemCaseSensitive(item, "One");
     TEST_ASSERT_NULL_MESSAGE(found, "Should not find something that isn't there.");
@@ -155,23 +155,16 @@ static void typecheck_functions_should_check_type(void)
     cJSON item[1];
     invalid->type = cJSON_Invalid;
     invalid->type |= cJSON_StringIsConst;
-    item->type = cJSON_False;
+    item->type = cJSON_Bool;
     item->type |= cJSON_StringIsConst;
 
     TEST_ASSERT_FALSE(cJSON_IsInvalid(NULL));
     TEST_ASSERT_FALSE(cJSON_IsInvalid(item));
     TEST_ASSERT_TRUE(cJSON_IsInvalid(invalid));
 
-    item->type = cJSON_False | cJSON_StringIsConst;
-    TEST_ASSERT_FALSE(cJSON_IsFalse(NULL));
-    TEST_ASSERT_FALSE(cJSON_IsFalse(invalid));
-    TEST_ASSERT_TRUE(cJSON_IsFalse(item));
-    TEST_ASSERT_TRUE(cJSON_IsBool(item));
-
-    item->type = cJSON_True | cJSON_StringIsConst;
-    TEST_ASSERT_FALSE(cJSON_IsTrue(NULL));
-    TEST_ASSERT_FALSE(cJSON_IsTrue(invalid));
-    TEST_ASSERT_TRUE(cJSON_IsTrue(item));
+    item->type = cJSON_Bool | cJSON_StringIsConst;
+    TEST_ASSERT_FALSE(cJSON_IsBool(NULL));
+    TEST_ASSERT_FALSE(cJSON_IsBool(invalid));
     TEST_ASSERT_TRUE(cJSON_IsBool(item));
 
     item->type = cJSON_NULL | cJSON_StringIsConst;
@@ -221,23 +214,19 @@ static void cjson_should_not_parse_to_deeply_nested_jsons(void)
 
 static void cjson_set_number_value_should_set_numbers(void)
 {
-    cJSON number[1] = {{NULL, NULL, NULL, cJSON_Number, NULL, 0, 0, NULL}};
+    cJSON number[1] = {{NULL, NULL, NULL, cJSON_Number, NULL, 0, NULL}};
 
-    cJSON_SetNumberValue(number, 1.5);
-    TEST_ASSERT_EQUAL(1, number->valueint);
-    TEST_ASSERT_EQUAL_DOUBLE(1.5, number->valuedouble);
+    cJSON_SetNumber(number, 1.5);
+    TEST_ASSERT_EQUAL_DOUBLE(1.5, number->number);
 
-    cJSON_SetNumberValue(number, -1.5);
-    TEST_ASSERT_EQUAL(-1, number->valueint);
-    TEST_ASSERT_EQUAL_DOUBLE(-1.5, number->valuedouble);
+    cJSON_SetNumber(number, -1.5);
+    TEST_ASSERT_EQUAL_DOUBLE(-1.5, number->number);
 
-    cJSON_SetNumberValue(number, 1 + (double)INT_MAX);
-    TEST_ASSERT_EQUAL(INT_MAX, number->valueint);
-    TEST_ASSERT_EQUAL_DOUBLE(1 + (double)INT_MAX, number->valuedouble);
+    cJSON_SetNumber(number, 1 + (double)INT_MAX);
+    TEST_ASSERT_EQUAL_DOUBLE(1 + (double)INT_MAX, number->number);
 
-    cJSON_SetNumberValue(number, -1 + (double)INT_MIN);
-    TEST_ASSERT_EQUAL(INT_MIN, number->valueint);
-    TEST_ASSERT_EQUAL_DOUBLE(-1 + (double)INT_MIN, number->valuedouble);
+    cJSON_SetNumber(number, -1 + (double)INT_MIN);
+    TEST_ASSERT_EQUAL_DOUBLE(-1 + (double)INT_MIN, number->number);
 }
 
 static void cjson_detach_item_via_pointer_should_detach_items(void)
@@ -329,7 +318,7 @@ static void cjson_replace_item_via_pointer_should_replace_items(void)
 
 static void cjson_replace_item_in_object_should_preserve_name(void)
 {
-    cJSON root[1] = {{ NULL, NULL, NULL, 0, NULL, 0, 0, NULL }};
+    cJSON root[1] = {{ NULL, NULL, NULL, 0, NULL, 0, NULL }};
     cJSON *child = NULL;
     cJSON *replacement = NULL;
     cJSON_bool flag = false;
@@ -344,7 +333,7 @@ static void cjson_replace_item_in_object_should_preserve_name(void)
     cJSON_ReplaceItemInObject(root, "child", replacement);
 
     TEST_ASSERT_TRUE(root->child == replacement);
-    TEST_ASSERT_EQUAL_STRING("child", replacement->string);
+    TEST_ASSERT_EQUAL_STRING("child", replacement->name);
 
     cJSON_Delete(replacement);
 }
@@ -372,8 +361,6 @@ static void cjson_functions_should_not_crash_with_null_pointers(void)
     TEST_ASSERT_FALSE(cJSON_HasObjectItem(NULL, "item"));
     TEST_ASSERT_FALSE(cJSON_HasObjectItem(item, NULL));
     TEST_ASSERT_FALSE(cJSON_IsInvalid(NULL));
-    TEST_ASSERT_FALSE(cJSON_IsFalse(NULL));
-    TEST_ASSERT_FALSE(cJSON_IsTrue(NULL));
     TEST_ASSERT_FALSE(cJSON_IsBool(NULL));
     TEST_ASSERT_FALSE(cJSON_IsNull(NULL));
     TEST_ASSERT_FALSE(cJSON_IsNumber(NULL));
@@ -480,9 +467,9 @@ static void cjson_get_string_value_should_get_a_string(void)
     cJSON *string = cJSON_CreateString("test");
     cJSON *number = cJSON_CreateNumber(1);
 
-    TEST_ASSERT_TRUE(cJSON_GetStringValue(string) == string->valuestring);
-    TEST_ASSERT_NULL(cJSON_GetStringValue(number));
-    TEST_ASSERT_NULL(cJSON_GetStringValue(NULL));
+    TEST_ASSERT_TRUE(cJSON_GetString(string) == string->valuestring);
+    TEST_ASSERT_NULL(cJSON_GetString(number));
+    TEST_ASSERT_NULL(cJSON_GetString(NULL));
 
     cJSON_Delete(number);
     cJSON_Delete(string);
@@ -493,9 +480,9 @@ static void cjson_get_number_value_should_get_a_number(void)
     cJSON *string = cJSON_CreateString("test");
     cJSON *number = cJSON_CreateNumber(1);
 
-    TEST_ASSERT_EQUAL_DOUBLE(cJSON_GetNumberValue(number), number->valuedouble);
-    TEST_ASSERT_DOUBLE_IS_NAN(cJSON_GetNumberValue(string));
-    TEST_ASSERT_DOUBLE_IS_NAN(cJSON_GetNumberValue(NULL));
+    TEST_ASSERT_EQUAL_DOUBLE(cJSON_GetNumber(number), number->number);
+    TEST_ASSERT_DOUBLE_IS_NAN(cJSON_GetNumber(string));
+    TEST_ASSERT_DOUBLE_IS_NAN(cJSON_GetNumber(NULL));
     
     cJSON_Delete(number);
     cJSON_Delete(string);
@@ -572,11 +559,11 @@ static void cjson_add_item_to_object_should_not_use_after_free_when_string_is_al
     TEST_ASSERT_NOT_NULL(number);
     TEST_ASSERT_NOT_NULL(name);
 
-    number->string = name;
+    number->name = name;
 
     /* The following should not have a use after free
      * that would show up in valgrind or with AddressSanitizer */
-    cJSON_AddItemToObject(object, number->string, number);
+    cJSON_AddItemToObject(object, number->name, number);
 
     cJSON_Delete(object);
 }
@@ -625,26 +612,26 @@ static void cjson_set_valuestring_to_object_should_not_leak_memory(void)
     cJSON *item1 = cJSON_CreateString(stringvalue);
     cJSON *item2 = cJSON_CreateStringReference(reference_valuestring);
     char *ptr1 = NULL;
-    char *return_value = NULL;
+    int return_value = 0;
     
     cJSON_AddItemToObject(root, "one", item1);
     cJSON_AddItemToObject(root, "two", item2);
 
     ptr1 = item1->valuestring;
-    return_value = cJSON_SetValuestring(cJSON_GetObjectItem(root, "one"), short_valuestring);
-    TEST_ASSERT_NOT_NULL(return_value);
-    TEST_ASSERT_EQUAL_PTR_MESSAGE(ptr1, return_value, "new valuestring shorter than old should not reallocate memory");
+    return_value = cJSON_SetString(cJSON_GetObjectItem(root, "one"), short_valuestring);
+    TEST_ASSERT_EQUAL(1, return_value);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(ptr1, item1->valuestring, "new valuestring shorter than old should not reallocate memory");
     TEST_ASSERT_EQUAL_STRING(short_valuestring, cJSON_GetObjectItem(root, "one")->valuestring);
 
     /* we needn't to free the original valuestring manually */
     ptr1 = item1->valuestring;
-    return_value = cJSON_SetValuestring(cJSON_GetObjectItem(root, "one"), long_valuestring);
-    TEST_ASSERT_NOT_NULL(return_value);
-    TEST_ASSERT_NOT_EQUAL_MESSAGE(ptr1, return_value, "new valuestring longer than old should reallocate memory")
+    return_value = cJSON_SetString(cJSON_GetObjectItem(root, "one"), long_valuestring);
+    TEST_ASSERT_EQUAL(1, return_value);
+    TEST_ASSERT_NOT_EQUAL_MESSAGE(ptr1, item1->valuestring, "new valuestring longer than old should reallocate memory")
     TEST_ASSERT_EQUAL_STRING(long_valuestring, cJSON_GetObjectItem(root, "one")->valuestring);
 
-    return_value = cJSON_SetValuestring(cJSON_GetObjectItem(root, "two"), long_valuestring);
-    TEST_ASSERT_NULL_MESSAGE(return_value, "valuestring of reference object should not be changed");
+    return_value = cJSON_SetString(cJSON_GetObjectItem(root, "two"), long_valuestring);
+    TEST_ASSERT_EQUAL_MESSAGE(0, return_value, "valuestring of reference object should not be changed");
     TEST_ASSERT_EQUAL_STRING(reference_valuestring, cJSON_GetObjectItem(root, "two")->valuestring);
 
     cJSON_Delete(root);

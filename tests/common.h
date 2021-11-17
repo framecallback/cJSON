@@ -35,9 +35,9 @@ void reset(cJSON *item) {
     {
         global_hooks.deallocate(item->valuestring);
     }
-    if ((item->string != NULL) && !(item->type & cJSON_StringIsConst))
+    if ((item->name != NULL) && !(item->type & cJSON_StringIsConst))
     {
-        global_hooks.deallocate(item->string);
+        global_hooks.deallocate(item->name);
     }
 
     memset(item, 0, sizeof(cJSON));
@@ -105,8 +105,8 @@ cleanup:
 #define assert_has_no_const_string(item) TEST_ASSERT_BITS_MESSAGE(cJSON_StringIsConst, 0, item->type, "Item should not have a const string.")
 #define assert_has_valuestring(item) TEST_ASSERT_NOT_NULL_MESSAGE(item->valuestring, "Valuestring is NULL.")
 #define assert_has_no_valuestring(item) TEST_ASSERT_NULL_MESSAGE(item->valuestring, "Valuestring is not NULL.")
-#define assert_has_string(item) TEST_ASSERT_NOT_NULL_MESSAGE(item->string, "String is NULL")
-#define assert_has_no_string(item) TEST_ASSERT_NULL_MESSAGE(item->string, "String is not NULL.")
+#define assert_has_string(item) TEST_ASSERT_NOT_NULL_MESSAGE(item->name, "Name is NULL")
+#define assert_has_no_string(item) TEST_ASSERT_NULL_MESSAGE(item->name, "Name is not NULL.")
 #define assert_not_in_list(item) \
 	TEST_ASSERT_NULL_MESSAGE(item->next, "Linked list next pointer is not NULL.");\
 	TEST_ASSERT_NULL_MESSAGE(item->prev, "Linked list previous pointer is not NULL.")

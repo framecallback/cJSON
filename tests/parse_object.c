@@ -45,8 +45,8 @@ static void assert_is_object(cJSON *object_item)
 static void assert_is_child(cJSON *child_item, const char *name, int type)
 {
     TEST_ASSERT_NOT_NULL_MESSAGE(child_item, "Child item is NULL.");
-    TEST_ASSERT_NOT_NULL_MESSAGE(child_item->string, "Child item doesn't have a name.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(name, child_item->string, "Child item has the wrong name.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(child_item->name, "Child item doesn't have a name.");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(name, child_item->name, "Child item has the wrong name.");
     TEST_ASSERT_BITS(0xFF, type, child_item->type);
 }
 
@@ -119,8 +119,8 @@ static void parse_object_should_parse_objects_with_multiple_elements(void)
         {
             cJSON_Number,
             cJSON_NULL,
-            cJSON_True,
-            cJSON_False,
+            cJSON_Bool,
+            cJSON_Bool,
             cJSON_Array,
             cJSON_String,
             cJSON_Object

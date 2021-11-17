@@ -120,8 +120,8 @@ static void parse_array_should_parse_arrays_with_multiple_elements(void)
         {
             cJSON_Number,
             cJSON_NULL,
-            cJSON_True,
-            cJSON_False,
+            cJSON_Bool,
+            cJSON_Bool,
             cJSON_Array,
             cJSON_String,
             cJSON_Object

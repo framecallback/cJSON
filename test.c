@@ -171,7 +171,7 @@ static void create_objects(void)
     cJSON_AddStringToObject(fmt, "type", "rect");
     cJSON_AddNumberToObject(fmt, "width", 1920);
     cJSON_AddNumberToObject(fmt, "height", 1080);
-    cJSON_AddFalseToObject (fmt, "interlace");
+    cJSON_AddBoolToObject(fmt, "interlace", 0);
     cJSON_AddNumberToObject(fmt, "frame rate", 24);
 
     /* Print to text */
