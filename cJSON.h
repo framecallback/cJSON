@@ -159,8 +159,8 @@ CJSON_PUBLIC(char *) cJSON_PrintBuffered(const cJSON *item, int prebuffer, cJSON
 /* Render a cJSON entity to text using a buffer already allocated in memory with given length. Returns 1 on success and 0 on failure. */
 /* NOTE: cJSON is not always 100% accurate in estimating how much memory it will use, so to be safe allocate 5 bytes more than you actually need */
 CJSON_PUBLIC(cJSON_bool) cJSON_PrintPreallocated(cJSON *item, char *buffer, int length, cJSON_bool format);
-/* Delete a cJSON entity and all subentities. */
-CJSON_PUBLIC(void) cJSON_Delete(cJSON *item);
+/* Delete a cJSON entity and all subentities. Will return false if the item is not a head node.*/
+CJSON_PUBLIC(cJSON_bool) cJSON_Delete(cJSON *item);
 
 /* Returns the number of items in an array (or object). */
 CJSON_PUBLIC(int) cJSON_GetArraySize(const cJSON *array);

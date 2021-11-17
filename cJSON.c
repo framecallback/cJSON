@@ -260,14 +260,14 @@ static cJSON *cJSON_New_Item(const internal_hooks *hooks)
 }
 
 /* Delete a cJSON structure. */
-CJSON_PUBLIC(void) cJSON_Delete(cJSON *item)
+CJSON_PUBLIC(cJSON_bool) cJSON_Delete(cJSON *item)
 {
     cJSON *next = NULL;
 
     /* Cannot delete item if it has parent. */
     if (item == NULL || item->parent != NULL)
     {
-        return;
+        return false;
     }
 
     while (item != NULL)
@@ -288,6 +288,7 @@ CJSON_PUBLIC(void) cJSON_Delete(cJSON *item)
         global_hooks.deallocate(item);
         item = next;
     }
+    return true;
 }
 
 /* get the decimal point character of the current locale */

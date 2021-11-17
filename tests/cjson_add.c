@@ -430,23 +430,31 @@ static void cjson_del(void)
     cJSON *root = cJSON_CreateObject();
     cJSON *true_item = NULL;
     cJSON *false_item = NULL;
-    cJSON *child_item = NULL;
 
     cJSON_AddBoolToObject(root, "true", true);
     cJSON_AddBoolToObject(root, "false", false);
     TEST_ASSERT_NOT_NULL(true_item = cJSON_GetObjectItemCaseSensitive(root, "true"));
     TEST_ASSERT_NOT_NULL(false_item = cJSON_GetObjectItemCaseSensitive(root, "false"));
-    child_item = root->child;
 
-    cJSON_Delete(true_item);
+    TEST_ASSERT_FALSE(cJSON_Delete(true_item));
     TEST_ASSERT_NOT_NULL(true_item = cJSON_GetObjectItemCaseSensitive(root, "true"));
-    TEST_ASSERT_EQUAL(child_item, root->child);
+    TEST_ASSERT_EQUAL(true_item, root->child);
 
-    cJSON_Delete(false_item);
+    TEST_ASSERT_FALSE(cJSON_Delete(false_item));
     TEST_ASSERT_NOT_NULL(false_item = cJSON_GetObjectItemCaseSensitive(root, "false"));
-    TEST_ASSERT_EQUAL(child_item, root->child);
+    TEST_ASSERT_EQUAL(true_item, root->child);
 
-    cJSON_Delete(root);
+    TEST_ASSERT_NOT_NULL(cJSON_DetachItemViaPointer(true_item));
+    TEST_ASSERT_NULL(cJSON_GetObjectItemCaseSensitive(root, "true"));
+    TEST_ASSERT_EQUAL(false_item, root->child);
+    TEST_ASSERT_TRUE(cJSON_Delete(true_item));
+
+    TEST_ASSERT_NOT_NULL(cJSON_DetachItemViaPointer(false_item));
+    TEST_ASSERT_NULL(cJSON_GetObjectItemCaseSensitive(root, "false"));
+    TEST_ASSERT_NULL(root->child);
+    TEST_ASSERT_TRUE(cJSON_Delete(false_item));
+
+    TEST_ASSERT_TRUE(cJSON_Delete(root));
 }
 
 int CJSON_CDECL main(void)
