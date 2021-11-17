@@ -1295,7 +1295,7 @@ static cJSON_bool parse_value(cJSON * const item, parse_buffer * const input_buf
     /* false */
     if (can_read(input_buffer, 5) && (strncmp((const char*)buffer_at_offset(input_buffer), "false", 5) == 0))
     {
-        item->type = cJSON_False;
+        item->type = cJSON_Bool;
         item->valuedouble = 0;
         input_buffer->offset += 5;
         return true;
@@ -1303,7 +1303,7 @@ static cJSON_bool parse_value(cJSON * const item, parse_buffer * const input_buf
     /* true */
     if (can_read(input_buffer, 4) && (strncmp((const char*)buffer_at_offset(input_buffer), "true", 4) == 0))
     {
-        item->type = cJSON_True;
+        item->type = cJSON_Bool;
         item->valuedouble = 1;
         input_buffer->offset += 4;
         return true;
@@ -1353,22 +1353,20 @@ static cJSON_bool print_value(const cJSON * const item, printbuffer * const outp
             strcpy((char*)output, "null");
             return true;
 
-        case cJSON_False:
-            output = ensure(output_buffer, 6);
+        case cJSON_Bool:
+            output = ensure(output_buffer, 5 + (item->valuedouble == 0));
             if (output == NULL)
             {
                 return false;
             }
-            strcpy((char*)output, "false");
-            return true;
-
-        case cJSON_True:
-            output = ensure(output_buffer, 5);
-            if (output == NULL)
+            if (item->valuedouble == 0)
             {
-                return false;
+                strcpy((char*)output, "false");
             }
-            strcpy((char*)output, "true");
+            else
+            {
+                strcpy((char*)output, "true");
+            }
             return true;
 
         case cJSON_Number:
@@ -2057,30 +2055,6 @@ CJSON_PUBLIC(cJSON*) cJSON_AddNullToObject(cJSON * const object, const char * co
     return NULL;
 }
 
-CJSON_PUBLIC(cJSON*) cJSON_AddTrueToObject(cJSON * const object, const char * const name)
-{
-    cJSON *true_item = cJSON_CreateTrue();
-    if (add_item_to_object(object, name, true_item, &global_hooks, false))
-    {
-        return true_item;
-    }
-
-    cJSON_Delete(true_item);
-    return NULL;
-}
-
-CJSON_PUBLIC(cJSON*) cJSON_AddFalseToObject(cJSON * const object, const char * const name)
-{
-    cJSON *false_item = cJSON_CreateFalse();
-    if (add_item_to_object(object, name, false_item, &global_hooks, false))
-    {
-        return false_item;
-    }
-
-    cJSON_Delete(false_item);
-    return NULL;
-}
-
 CJSON_PUBLIC(cJSON*) cJSON_AddBoolToObject(cJSON * const object, const char * const name, const cJSON_bool boolean)
 {
     cJSON *bool_item = cJSON_CreateBool(boolean);
@@ -2357,34 +2331,13 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNull(void)
     return item;
 }
 
-CJSON_PUBLIC(cJSON *) cJSON_CreateTrue(void)
-{
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if(item)
-    {
-        item->type = cJSON_True;
-    }
-
-    return item;
-}
-
-CJSON_PUBLIC(cJSON *) cJSON_CreateFalse(void)
-{
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if(item)
-    {
-        item->type = cJSON_False;
-    }
-
-    return item;
-}
-
 CJSON_PUBLIC(cJSON *) cJSON_CreateBool(cJSON_bool boolean)
 {
     cJSON *item = cJSON_New_Item(&global_hooks);
     if(item)
     {
-        item->type = boolean ? cJSON_True : cJSON_False;
+        item->type = cJSON_Bool;
+        item->valuedouble = boolean;
     }
 
     return item;
@@ -2842,27 +2795,6 @@ CJSON_PUBLIC(cJSON_bool) cJSON_IsInvalid(const cJSON * const item)
     return (item->type & 0xFF) == cJSON_Invalid;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_IsFalse(const cJSON * const item)
-{
-    if (item == NULL)
-    {
-        return false;
-    }
-
-    return (item->type & 0xFF) == cJSON_False;
-}
-
-CJSON_PUBLIC(cJSON_bool) cJSON_IsTrue(const cJSON * const item)
-{
-    if (item == NULL)
-    {
-        return false;
-    }
-
-    return (item->type & 0xff) == cJSON_True;
-}
-
-
 CJSON_PUBLIC(cJSON_bool) cJSON_IsBool(const cJSON * const item)
 {
     if (item == NULL)
@@ -2870,7 +2802,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_IsBool(const cJSON * const item)
         return false;
     }
 
-    return (item->type & (cJSON_True | cJSON_False)) != 0;
+    return (item->type & cJSON_Bool) != 0;
 }
 CJSON_PUBLIC(cJSON_bool) cJSON_IsNull(const cJSON * const item)
 {
@@ -2942,8 +2874,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * cons
     /* check if type is valid */
     switch (a->type & 0xFF)
     {
-        case cJSON_False:
-        case cJSON_True:
+        case cJSON_Bool:
         case cJSON_NULL:
         case cJSON_Number:
         case cJSON_String:
@@ -2965,11 +2896,10 @@ CJSON_PUBLIC(cJSON_bool) cJSON_Compare(const cJSON * const a, const cJSON * cons
     switch (a->type & 0xFF)
     {
         /* in these cases and equal type is enough */
-        case cJSON_False:
-        case cJSON_True:
         case cJSON_NULL:
             return true;
 
+        case cJSON_Bool:
         case cJSON_Number:
             if (compare_double(a->valuedouble, b->valuedouble))
             {
