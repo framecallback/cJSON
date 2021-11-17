@@ -2,15 +2,15 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required(VERSION 3.0)
 
 project(cJSON
-    VERSION 1.7.15
+    VERSION 2.0.0
     LANGUAGES C)
 
 cmake_policy(SET CMP0054 NEW)  # set CMP0054 policy
 
 include(GNUInstallDirs)
 
-set(CJSON_VERSION_SO 1)
-set(CJSON_UTILS_VERSION_SO 1)
+set(CJSON_VERSION_SO 2)
+set(CJSON_UTILS_VERSION_SO 2)
 
 set(custom_compiler_flags)
 
