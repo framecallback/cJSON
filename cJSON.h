@@ -173,9 +173,14 @@ CJSON_PUBLIC(cJSON_bool) cJSON_HasObjectItem(const cJSON *object, const char *st
 CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void);
 
 /* Check item type and return its value */
-CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item);
-CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item);
-CJSON_PUBLIC(cJSON_bool) cJSON_GetBoolValue(const cJSON * const item);
+CJSON_PUBLIC(char *) cJSON_GetString(const cJSON * const item);
+CJSON_PUBLIC(double) cJSON_GetNumber(const cJSON * const item);
+CJSON_PUBLIC(cJSON_bool) cJSON_GetBool(const cJSON * const item);
+
+/* Check item type and set its value */
+CJSON_PUBLIC(cJSON_bool) cJSON_SetBool(cJSON *object, cJSON_bool value);
+CJSON_PUBLIC(cJSON_bool) cJSON_SetNumber(cJSON *object, double number);
+CJSON_PUBLIC(cJSON_bool) cJSON_SetString(cJSON *object, const char *valuestring);
 
 /* These functions check the type of an item */
 CJSON_PUBLIC(cJSON_bool) cJSON_IsInvalid(const cJSON * const item);
@@ -192,7 +197,6 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNull(void);
 CJSON_PUBLIC(cJSON *) cJSON_CreateBool(cJSON_bool boolean);
 CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num);
 CJSON_PUBLIC(cJSON *) cJSON_CreateString(const char *string);
-/* raw json */
 CJSON_PUBLIC(cJSON *) cJSON_CreateRaw(const char *raw);
 CJSON_PUBLIC(cJSON *) cJSON_CreateArray(void);
 CJSON_PUBLIC(cJSON *) cJSON_CreateObject(void);
@@ -262,13 +266,6 @@ CJSON_PUBLIC(cJSON*) cJSON_AddStringToObject(cJSON * const object, const char * 
 CJSON_PUBLIC(cJSON*) cJSON_AddRawToObject(cJSON * const object, const char * const name, const char * const raw);
 CJSON_PUBLIC(cJSON*) cJSON_AddObjectToObject(cJSON * const object, const char * const name);
 CJSON_PUBLIC(cJSON*) cJSON_AddArrayToObject(cJSON * const object, const char * const name);
-
-/* Change the valuedouble of a cJSON_Bool object, only takes effect when type of object is cJSON_Bool */
-CJSON_PUBLIC(cJSON_bool) cJSON_SetBoolValue(cJSON *object, cJSON_bool value);
-/* Change the valuedouble of a cJSON_Number object, only takes effect when type of object is cJSON_Number */
-CJSON_PUBLIC(cJSON_bool) cJSON_SetNumberValue(cJSON *object, double number);
-/* Change the valuestring of a cJSON_String object, only takes effect when type of object is cJSON_String */
-CJSON_PUBLIC(cJSON_bool) cJSON_SetValuestring(cJSON *object, const char *valuestring);
 
 /* Macro for iterating over an array or object */
 #define cJSON_ArrayForEach(element, array) for(element = (array != NULL) ? (array)->child : NULL; element != NULL; element = element->next)

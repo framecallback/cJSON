@@ -69,6 +69,9 @@
 #endif
 #define false ((cJSON_bool)0)
 
+#define CJSON_STRX(x) #x
+#define CJSON_STR(x) CJSON_STRX(x)
+
 /* define isnan and isinf for ANSI C, if in C99 or above, isnan and isinf has been defined in math.h */
 #ifndef isinf
 #define isinf(d) (isnan((d - d)) && !isnan(d))
@@ -96,7 +99,7 @@ CJSON_PUBLIC(const char *) cJSON_GetErrorPtr(void)
     return (const char*) (global_error.json + global_error.position);
 }
 
-CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item) 
+CJSON_PUBLIC(char *) cJSON_GetString(const cJSON * const item) 
 {
     if (!cJSON_IsString(item)) 
     {
@@ -106,7 +109,7 @@ CJSON_PUBLIC(char *) cJSON_GetStringValue(const cJSON * const item)
     return item->valuestring;
 }
 
-CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item) 
+CJSON_PUBLIC(double) cJSON_GetNumber(const cJSON * const item) 
 {
     if (!cJSON_IsNumber(item)) 
     {
@@ -116,7 +119,7 @@ CJSON_PUBLIC(double) cJSON_GetNumberValue(const cJSON * const item)
     return item->valuedouble;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_GetBoolValue(const cJSON * const item) 
+CJSON_PUBLIC(cJSON_bool) cJSON_GetBool(const cJSON * const item) 
 {
     if (!cJSON_IsBool(item)) 
     {
@@ -133,10 +136,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetBoolValue(const cJSON * const item)
 
 CJSON_PUBLIC(const char*) cJSON_Version(void)
 {
-    static char version[15];
-    sprintf(version, "%i.%i.%i", CJSON_VERSION_MAJOR, CJSON_VERSION_MINOR, CJSON_VERSION_PATCH);
-
-    return version;
+    return CJSON_STR(CJSON_VERSION_MAJOR) "." CJSON_STR(CJSON_VERSION_MINOR) "." CJSON_STR(CJSON_VERSION_PATCH);
 }
 
 /* Case insensitive string comparison, doesn't consider two NULL pointers equal though */
@@ -373,7 +373,7 @@ loop_end:
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_SetBoolValue(cJSON *object, cJSON_bool value)
+CJSON_PUBLIC(cJSON_bool) cJSON_SetBool(cJSON *object, cJSON_bool value)
 {
     if (!(object->type & cJSON_Bool))
     {
@@ -383,8 +383,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_SetBoolValue(cJSON *object, cJSON_bool value)
     return true;
 }
 
-/* don't ask me, but the original cJSON_SetNumberValue returns an integer or double */
-CJSON_PUBLIC(cJSON_bool) cJSON_SetNumberHelper(cJSON *object, double number)
+CJSON_PUBLIC(cJSON_bool) cJSON_SetNumber(cJSON *object, double number)
 {
     if (!(object->type & cJSON_Number))
     {
@@ -394,7 +393,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_SetNumberHelper(cJSON *object, double number)
     return true;
 }
 
-CJSON_PUBLIC(cJSON_bool) cJSON_SetValuestring(cJSON *object, const char *valuestring)
+CJSON_PUBLIC(cJSON_bool) cJSON_SetString(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
     /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */
