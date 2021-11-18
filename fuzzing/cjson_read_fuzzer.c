@@ -16,7 +16,8 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     size_t offset = 4;
     unsigned char *copied;
     char *printed_json = NULL;
-    int minify, require_termination, formatted, buffered;
+    int minify, buffered;
+    cJSON_bool require_termination, formatted;
 
 
     if(size <= offset) return 0;

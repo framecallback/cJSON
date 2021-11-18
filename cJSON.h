@@ -129,7 +129,7 @@ typedef struct cJSON_Hooks
     void *(CJSON_CDECL *realloc_fn)(void *ptr, size_t sz);
 } cJSON_Hooks;
 
-typedef int cJSON_bool;
+typedef unsigned char cJSON_bool;
 
 /* Limits how deeply nested arrays/objects can be before cJSON rejects to parse them.
  * This is to prevent stack overflows. */
