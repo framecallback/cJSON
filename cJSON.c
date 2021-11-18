@@ -195,6 +195,23 @@ static void * CJSON_CDECL internal_realloc(void *pointer, size_t size)
 
 static internal_hooks global_hooks = { internal_malloc, internal_free, internal_realloc };
 
+static cJSON_bool is_valid_type(int type)
+{
+    switch (type & ~(cJSON_StringIsConst | cJSON_IsReference))
+    {
+        case cJSON_Bool:
+        case cJSON_NULL:
+        case cJSON_Number:
+        case cJSON_String:
+        case cJSON_Array:
+        case cJSON_Object:
+        case cJSON_Raw:
+            return true;
+        default:
+            return false;
+    }
+}
+
 static unsigned char* cJSON_strdup(const unsigned char* string, const internal_hooks *hooks)
 {
     size_t length = 0;
@@ -387,7 +404,7 @@ loop_end:
 
 CJSON_PUBLIC(cJSON_bool) cJSON_SetBool(cJSON *object, cJSON_bool value)
 {
-    if (!(object->type & cJSON_Bool))
+    if (!object || !(object->type & cJSON_Bool))
     {
         return false;
     }
@@ -397,7 +414,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_SetBool(cJSON *object, cJSON_bool value)
 
 CJSON_PUBLIC(cJSON_bool) cJSON_SetNumber(cJSON *object, double number)
 {
-    if (!(object->type & cJSON_Number))
+    if (!object || !(object->type & cJSON_Number))
     {
         return false;
     }
@@ -408,12 +425,16 @@ CJSON_PUBLIC(cJSON_bool) cJSON_SetNumber(cJSON *object, double number)
 CJSON_PUBLIC(cJSON_bool) cJSON_SetString(cJSON *object, const char *valuestring)
 {
     char *copy = NULL;
+    if (!object || !valuestring)
+    {
+        return false;
+    }
     /* if object's type is not cJSON_String or is cJSON_IsReference, it should not set valuestring */
     if (!(object->type & cJSON_String) || (object->type & cJSON_IsReference))
     {
         return false;
     }
-    if (strlen(valuestring) <= strlen(object->valuestring))
+    if (object->valuestring && strlen(valuestring) <= strlen(object->valuestring))
     {
         strcpy(object->valuestring, valuestring);
         return true;
@@ -423,10 +444,35 @@ CJSON_PUBLIC(cJSON_bool) cJSON_SetString(cJSON *object, const char *valuestring)
     {
         return false;
     }
-    if (object->valuestring != NULL)
+    cJSON_free(object->valuestring);
+    object->valuestring = copy;
+
+    return true;
+}
+
+CJSON_PUBLIC(cJSON_bool) cJSON_SetRaw(cJSON *object, const char *raw)
+{
+    char *copy = NULL;
+    if (!object || !raw)
     {
-        cJSON_free(object->valuestring);
+        return false;
     }
+    /* if object's type is not cJSON_Raw or is cJSON_IsReference, it should not set valuestring */
+    if (!(object->type & cJSON_Raw) || (object->type & cJSON_IsReference))
+    {
+        return false;
+    }
+    if (object->valuestring && strlen(raw) <= strlen(object->valuestring))
+    {
+        strcpy(object->valuestring, raw);
+        return true;
+    }
+    copy = (char*) cJSON_strdup((const unsigned char*)raw, &global_hooks);
+    if (copy == NULL)
+    {
+        return false;
+    }
+    cJSON_free(object->valuestring);
     object->valuestring = copy;
 
     return true;
@@ -2379,55 +2425,56 @@ CJSON_PUBLIC(cJSON_bool) cJSON_ReplaceItemInObjectCaseSensitive(cJSON *object, c
 }
 
 /* Create basic types: */
-CJSON_PUBLIC(cJSON *) cJSON_CreateNull(void)
+CJSON_PUBLIC(cJSON *) cJSON_CreateNode(int type)
 {
-    cJSON *item = cJSON_New_Item(&global_hooks);
+    cJSON *item = NULL;
+    if (!is_valid_type(type))
+    {
+        return NULL;
+    }
+    item = cJSON_New_Item(&global_hooks);
     if(item)
     {
-        item->type = cJSON_NULL;
+        item->type = type;
     }
-
     return item;
+}
+
+CJSON_PUBLIC(cJSON *) cJSON_CreateNull(void)
+{
+    return cJSON_CreateNode(cJSON_NULL);
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_CreateBool(cJSON_bool boolean)
 {
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if(item)
+    cJSON *item = cJSON_CreateNode(cJSON_Bool);
+    if(!cJSON_SetBool(item, boolean))
     {
-        item->type = cJSON_Bool;
-        item->number = boolean;
+        cJSON_Delete(item);
+        return NULL;
     }
-
     return item;
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
 {
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if(item)
+    cJSON *item = cJSON_CreateNode(cJSON_Number);
+    if(!cJSON_SetNumber(item, num))
     {
-        item->type = cJSON_Number;
-        item->number = num;
+        cJSON_Delete(item);
+        return NULL;
     }
-
     return item;
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_CreateString(const char *string)
 {
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if(item)
+    cJSON *item = cJSON_CreateNode(cJSON_String);
+    if(!cJSON_SetString(item, string))
     {
-        item->type = cJSON_String;
-        item->valuestring = (char*)cJSON_strdup((const unsigned char*)string, &global_hooks);
-        if(!item->valuestring)
-        {
-            cJSON_Delete(item);
-            return NULL;
-        }
+        cJSON_Delete(item);
+        return NULL;
     }
-
     return item;
 }
 
@@ -2483,24 +2530,12 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateRaw(const char *raw)
 
 CJSON_PUBLIC(cJSON *) cJSON_CreateArray(void)
 {
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if(item)
-    {
-        item->type=cJSON_Array;
-    }
-
-    return item;
+    return cJSON_CreateNode(cJSON_Array);
 }
 
 CJSON_PUBLIC(cJSON *) cJSON_CreateObject(void)
 {
-    cJSON *item = cJSON_New_Item(&global_hooks);
-    if (item)
-    {
-        item->type = cJSON_Object;
-    }
-
-    return item;
+    return cJSON_CreateNode(cJSON_Object);
 }
 
 /* Create Arrays: */

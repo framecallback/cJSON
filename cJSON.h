@@ -184,6 +184,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_GetBool(const cJSON *item);
 CJSON_PUBLIC(cJSON_bool) cJSON_SetBool(cJSON *object, cJSON_bool value);
 CJSON_PUBLIC(cJSON_bool) cJSON_SetNumber(cJSON *object, double number);
 CJSON_PUBLIC(cJSON_bool) cJSON_SetString(cJSON *object, const char *valuestring);
+CJSON_PUBLIC(cJSON_bool) cJSON_SetRaw(cJSON *object, const char *raw);
 
 /* These functions check the type of an item */
 CJSON_PUBLIC(cJSON_bool) cJSON_IsInvalid(const cJSON *item);
@@ -196,6 +197,7 @@ CJSON_PUBLIC(cJSON_bool) cJSON_IsObject(const cJSON *item);
 CJSON_PUBLIC(cJSON_bool) cJSON_IsRaw(const cJSON *item);
 
 /* These calls create a cJSON item of the appropriate type. */
+CJSON_PUBLIC(cJSON *) cJSON_CreateNode(int type);
 CJSON_PUBLIC(cJSON *) cJSON_CreateNull(void);
 CJSON_PUBLIC(cJSON *) cJSON_CreateBool(cJSON_bool boolean);
 CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num);
