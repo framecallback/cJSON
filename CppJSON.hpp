@@ -187,7 +187,8 @@ public:
   std::string ToFormattedString() const { char* p = cJSON_Print(m_json); std::string ret(p); cJSON_free(p); return ret; }
   // fmt must be C format without any other chars, like "%05d", "%.3f"
   char* ToString(const std::string& fmt, char* buffer) const {
-    assert(*buffer == '%');
+    assert(fmt.length() > 0);
+    assert(fmt[0] == '%');
     if (IsNull()) {
       sprintf(buffer, fmt.c_str(), "null");
     } else if (IsBool() || IsNumber()) {
